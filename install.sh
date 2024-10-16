@@ -34,25 +34,30 @@ mkfs.btrfs -f $ROOT_PARTITION
 
 # Mount the root partition
 echo "Mounting the root partition..."
+mount $ROOT_PARTITION /mnt
+
+# Create Btrfs subvolumes
+echo "Creating Btrfs subvolumes..."
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@var
+btrfs subvolume create /mnt/@tmp
+btrfs subvolume create /mnt/@.snapshots
+
+# Unmount the root partition
+umount /mnt
+
+# Mount the root subvolume
+echo "Mounting the root subvolume..."
 mount -o noatime,compress=zstd,subvol=@ $ROOT_PARTITION /mnt
 
 # Create mount points and mount other subvolumes
+echo "Mounting other subvolumes..."
 mkdir -p /mnt/{boot,home,var,tmp,.snapshots}
 mount -o noatime,compress=zstd,subvol=@home $ROOT_PARTITION /mnt/home
 mount -o noatime,compress=zstd,subvol=@var $ROOT_PARTITION /mnt/var
 mount -o noatime,compress=zstd,subvol=@tmp $ROOT_PARTITION /mnt/tmp
 mount -o noatime,compress=zstd,subvol=@.snapshots $ROOT_PARTITION /mnt/.snapshots
-
-# Unmount and remount the subvolumes
-umount /mnt
-mount -o noatime,compress=zstd,space_cache,subvol=@ $ROOT_PARTITION /mnt
-
-# Create mount points and mount other subvolumes
-mkdir -p /mnt/{boot,home,var,tmp,.snapshots}
-mount -o noatime,compress=zstd,space_cache,subvol=@home $ROOT_PARTITION /mnt/home
-mount -o noatime,compress=zstd,space_cache,subvol=@var $ROOT_PARTITION /mnt/var
-mount -o noatime,compress=zstd,space_cache,subvol=@tmp $ROOT_PARTITION /mnt/tmp
-mount -o noatime,compress=zstd,space_cache,subvol=@.snapshots $ROOT_PARTITION /mnt/.snapshots
 
 # Mount the boot partition
 mount $BOOT_PARTITION /mnt/boot
