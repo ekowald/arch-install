@@ -25,47 +25,25 @@ echo "Partitioning the disk..."
 parted -s $DISK mklabel gpt \
   mkpart ESP fat32 1MiB 513MiB \
   set 1 boot on \
-  mkpart primary btrfs 513MiB 100%
+  mkpart primary ext4 513MiB 100%
 
 # Format the partitions
 echo "Formatting the partitions..."
 mkfs.fat -F32 $BOOT_PARTITION
-mkfs.btrfs -f $ROOT_PARTITION
+mkfs.ext4 $ROOT_PARTITION
 
 # Mount the root partition
 echo "Mounting the root partition..."
 mount $ROOT_PARTITION /mnt
 
-# Create Btrfs subvolumes
-echo "Creating Btrfs subvolumes..."
-btrfs subvolume create /mnt/@
-btrfs subvolume create /mnt/@home
-btrfs subvolume create /mnt/@var
-btrfs subvolume create /mnt/@tmp
-btrfs subvolume create /mnt/@.snapshots
-
-# Unmount the root partition
-umount /mnt
-
-# Mount the root subvolume
-echo "Mounting the root subvolume..."
-mount -o noatime,compress=zstd,subvol=@ $ROOT_PARTITION /mnt
-
-# Create mount points and mount other subvolumes
-echo "Mounting other subvolumes..."
-mkdir -p /mnt/{boot,home,var,tmp,.snapshots}
-mount -o noatime,compress=zstd,subvol=@home $ROOT_PARTITION /mnt/home
-mount -o noatime,compress=zstd,subvol=@var $ROOT_PARTITION /mnt/var
-mount -o noatime,compress=zstd,subvol=@tmp $ROOT_PARTITION /mnt/tmp
-mount -o noatime,compress=zstd,subvol=@.snapshots $ROOT_PARTITION /mnt/.snapshots
-
-# Mount the boot partition
+# Create mount point for boot and mount it
+mkdir -p /mnt/boot
 mount $BOOT_PARTITION /mnt/boot
 
 # Install essential packages
 echo "Installing essential packages..."
 pacstrap /mnt base linux linux-firmware base-devel git wget neovim \
-  intel-ucode networkmanager openssh btrfs-progs sudo vim htop \
+  intel-ucode networkmanager openssh sudo htop \
   alacritty gnome gnome-extra i3 fish docker docker-compose \
   xorg xorg-server xorg-apps xorg-xinit net-tools dnsutils zip unzip rsync tree
 
@@ -112,7 +90,7 @@ title   Arch Linux
 linux   /vmlinuz-linux
 initrd  /intel-ucode.img
 initrd  /initramfs-linux.img
-options root=PARTUUID=$PARTUUID rw rootflags=subvol=@
+options root=PARTUUID=$PARTUUID rw
 EOL
 
 # Set root password
@@ -143,7 +121,7 @@ sudo -u $USERNAME makepkg -si --noconfirm
 sudo -u $USERNAME yay -S --noconfirm visual-studio-code-bin nerd-fonts-jetbrains-mono oh-my-fish
 
 # Install themes and icons
-pacman -S --noconfirm arc-gtk-theme arc-icon-theme papirus-icon-theme
+pacman -S --noconfirm arc-gtk-theme papirus-icon-theme
 
 # Install ClamAV and rkhunter
 pacman -S --noconfirm clamav rkhunter
