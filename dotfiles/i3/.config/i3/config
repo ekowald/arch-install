@@ -1,0 +1,22 @@
+# i3 Window Manager Configuration
+
+set $mod Mod4
+
+# Font
+font pango:JetBrainsMono Nerd Font 12
+
+# Gaps
+gaps inner 10
+gaps outer 10
+
+# Keybindings
+bindsym $mod+Return exec alacritty
+bindsym $mod+d exec dmenu_run
+
+# Exit
+bindsym $mod+Shift+e exit
+
+# Status Bar
+bar {
+    status_command i3status
+}

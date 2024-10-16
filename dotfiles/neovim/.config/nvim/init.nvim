@@ -1,0 +1,21 @@
+" Neovim Configuration
+
+set number
+syntax on
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set clipboard=unnamedplus
+
+call plug#begin('~/.vim/plugged')
+
+" Plugins
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'scrooloose/nerdtree'
+
+call plug#end()
+
+" Keybindings
+noremap <C-n> :NERDTreeToggle<CR>
