@@ -34,15 +34,14 @@ mkfs.btrfs -f $ROOT_PARTITION
 
 # Mount the root partition
 echo "Mounting the root partition..."
-mount $ROOT_PARTITION /mnt
+mount -o noatime,compress=zstd,subvol=@ $ROOT_PARTITION /mnt
 
-# Create Btrfs subvolumes
-echo "Creating Btrfs subvolumes..."
-btrfs su cr /mnt/@
-btrfs su cr /mnt/@home
-btrfs su cr /mnt/@var
-btrfs su cr /mnt/@tmp
-btrfs su cr /mnt/@.snapshots
+# Create mount points and mount other subvolumes
+mkdir -p /mnt/{boot,home,var,tmp,.snapshots}
+mount -o noatime,compress=zstd,subvol=@home $ROOT_PARTITION /mnt/home
+mount -o noatime,compress=zstd,subvol=@var $ROOT_PARTITION /mnt/var
+mount -o noatime,compress=zstd,subvol=@tmp $ROOT_PARTITION /mnt/tmp
+mount -o noatime,compress=zstd,subvol=@.snapshots $ROOT_PARTITION /mnt/.snapshots
 
 # Unmount and remount the subvolumes
 umount /mnt
