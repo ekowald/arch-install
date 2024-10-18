@@ -51,6 +51,9 @@ pacstrap /mnt base linux linux-firmware base-devel git wget neovim \
 echo "Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
+# Get the PARTUUID for the root partition
+PARTUUID=$(blkid -s PARTUUID -o value $ROOT_PARTITION)
+
 # Chroot into the new system
 echo "Entering chroot environment..."
 arch-chroot /mnt /bin/bash <<EOF
@@ -73,25 +76,8 @@ cat >> /etc/hosts <<EOL
 127.0.1.1   $HOSTNAME.localdomain $HOSTNAME
 EOL
 
-# Install and configure systemd-boot
+# Install systemd-boot
 bootctl install
-cat > /boot/loader/loader.conf <<EOL
-default arch.conf
-timeout 3
-editor 0
-EOL
-
-# Get the PARTUUID for the root partition
-PARTUUID=$(blkid -s PARTUUID -o value $ROOT_PARTITION)
-
-# Create boot entry
-cat > /boot/loader/entries/arch.conf <<EOL
-title   Arch Linux
-linux   /vmlinuz-linux
-initrd  /intel-ucode.img
-initrd  /initramfs-linux.img
-options root=PARTUUID=$PARTUUID rw
-EOL
 
 # Configure sudoers
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
@@ -149,6 +135,22 @@ sed -i 's/#WaylandEnable=false/WaylandEnable=true/' /etc/gdm/custom.conf
 systemctl enable gdm
 
 EOF
+
+# Create bootloader configuration files outside chroot
+echo "Creating bootloader configuration..."
+cat > /mnt/boot/loader/loader.conf <<EOL
+default arch.conf
+timeout 3
+editor 0
+EOL
+
+cat > /mnt/boot/loader/entries/arch.conf <<EOL
+title   Arch Linux
+linux   /vmlinuz-linux
+initrd  /intel-ucode.img
+initrd  /initramfs-linux.img
+options root=PARTUUID=$PARTUUID rw
+EOL
 
 # Now, outside the here-document, set passwords and create user
 echo "Creating new user and setting passwords..."
