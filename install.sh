@@ -93,15 +93,6 @@ initrd  /initramfs-linux.img
 options root=PARTUUID=$PARTUUID rw
 EOL
 
-# Set root password
-echo "Set root password:"
-passwd root
-
-# Create new user
-useradd -m -G wheel,docker -s /usr/bin/fish $USERNAME
-echo "Set password for $USERNAME:"
-passwd $USERNAME
-
 # Configure sudoers
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
@@ -158,6 +149,18 @@ sed -i 's/#WaylandEnable=false/WaylandEnable=true/' /etc/gdm/custom.conf
 systemctl enable gdm
 
 EOF
+
+# Now, outside the here-document, set passwords and create user
+echo "Creating new user and setting passwords..."
+arch-chroot /mnt /bin/bash <<EOF
+useradd -m -G wheel,docker -s /usr/bin/fish $USERNAME
+EOF
+
+echo "Set root password:"
+arch-chroot /mnt passwd root
+
+echo "Set password for $USERNAME:"
+arch-chroot /mnt passwd $USERNAME
 
 # Unmount all partitions
 echo "Unmounting partitions..."
